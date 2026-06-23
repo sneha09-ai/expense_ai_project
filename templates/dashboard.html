@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body.dark {
+            background-color: #121212;
+            color: white;
+        }
+
+        body.dark .container {
+            background-color: #1e1e1e;
+            color: white;
+        }
+
+        body.dark table {
+            color: white;
+            border-color: white;
+        }
+
+        body.dark input, body.dark select {
+            background-color: #333;
+            color: white;
+            border: 1px solid white;
+        }
+
+        body.dark a {
+            color: #90caf9;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <button onclick="toggleDarkMode()">🌙 Toggle Dark Mode</button>
+
+    <a href="/logout">
+        <button>🚪 Logout</button>
+    </a>
+
+    <h1>💸 Smart Expense Dashboard</h1>
+
+    <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:20px;">
+
+        <div style="flex:1; min-width:200px; background:#e3f2fd; padding:20px; border-radius:15px; text-align:center;">
+            <h3>💰 Total Expense</h3>
+            <h2>₹{{ total }}</h2>
+        </div>
+
+        <div style="flex:1; min-width:200px; background:#e8f5e9; padding:20px; border-radius:15px; text-align:center;">
+            <h3>📈 Predicted Expense</h3>
+            <h2>₹{{ prediction }}</h2>
+        </div>
+
+        <div style="flex:1; min-width:200px; background:#fff3e0; padding:20px; border-radius:15px; text-align:center;">
+            <h3>🎯 Budget Used</h3>
+            <h2>{{ used_percent }}%</h2>
+        </div>
+
+        <div style="flex:1; min-width:200px; background:#f3e5f5; padding:20px; border-radius:15px; text-align:center;">
+            <h3>📋 Total Entries</h3>
+            <h2>{{ total_entries }}</h2>
+        </div>
+
+        <div style="flex:1; min-width:200px; background:#ffebee; padding:20px; border-radius:15px; text-align:center;">
+            <h3>🔥 Highest Expense</h3>
+            <h2>₹{{ highest }}</h2>
+        </div>
+
+        <div style="flex:1; min-width:200px; background:#e0f7fa; padding:20px; border-radius:15px; text-align:center;">
+            <h3>📊 Average Expense</h3>
+            <h2>₹{{ average }}</h2>
+        </div>
+
+        <div style="flex:1; min-width:200px; background:#fff9c4; padding:20px; border-radius:15px; text-align:center;">
+    <h3>🏆 Top Category</h3>
+    <h2>{{ top_cat }}</h2>
+    <p>₹{{ top_amount }}</p>
+</div>
+
+    </div>
+
+    <h3>🤖 AI Advisor:</h3>
+    <ul>
+        {% for item in advice %}
+            <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+
+    <hr>
+
+    <h2>🎯 Monthly Budget Tracker</h2>
+    <h3>Monthly Budget: ₹{{ monthly_budget }}</h3>
+    <h3>Remaining Budget: ₹{{ remaining_budget }}</h3>
+    <h3>Budget Used: {{ used_percent }}%</h3>
+    <p><b>{{ budget_message }}</b></p>
+
+    <div style="width:100%; background:#ddd; border-radius:10px;">
+        <div style="width:{{ used_percent }}%; background:#4CAF50; color:white; padding:8px; border-radius:10px; text-align:center;">
+            {{ used_percent }}%
+        </div>
+    </div>
+
+    <hr>
+
+    <h2>🎯 Category Budget Limits</h2>
+
+    <table border="1" cellpadding="10" style="width:100%;">
+        <tr>
+            <th>Category</th>
+            <th>Budget</th>
+            <th>Spent</th>
+            <th>Remaining</th>
+            <th>Status</th>
+        </tr>
+
+        {% for cat, data in category_budget_data.items() %}
+        <tr>
+            <td>{{ cat }}</td>
+            <td>₹{{ data.budget }}</td>
+            <td>₹{{ data.spent }}</td>
+            <td>₹{{ data.remaining }}</td>
+            <td>{{ data.message }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <hr>
+
+    <h2>📊 Category Wise Spending</h2>
+
+    <div style="width:300px; height:300px; margin:auto;">
+        <canvas id="expenseChart"></canvas>
+    </div>
+
+    <ul>
+        {% for cat, amt in category_data.items() %}
+            <li>🔹 {{ cat }} : ₹{{ amt }}</li>
+        {% endfor %}
+    </ul>
+
+    <hr>
+
+    <h2>📈 Monthly Expense Trend</h2>
+
+    <div style="width:700px; height:350px; margin:auto;">
+        <canvas id="monthlyChart"></canvas>
+    </div>
+
+    <hr>
+
+    <h2>🔍 Filter Expenses</h2>
+
+    <form method="GET" action="/dashboard">
+
+        <input type="text"
+               name="search"
+               placeholder="Search by name or category"
+               value="{{ search }}">
+
+        <select name="date_filter">
+            <option value="all" {% if date_filter == "all" %}selected{% endif %}>All Expenses</option>
+            <option value="today" {% if date_filter == "today" %}selected{% endif %}>Today</option>
+            <option value="month" {% if date_filter == "month" %}selected{% endif %}>This Month</option>
+        </select>
+
+        <select name="sort_by">
+
+    <option value="default" {% if sort_by == "default" %}selected{% endif %}>
+        Default Sorting
+    </option>
+
+    <option value="amount_low" {% if sort_by == "amount_low" %}selected{% endif %}>
+        Amount Low → High
+    </option>
+
+    <option value="amount_high" {% if sort_by == "amount_high" %}selected{% endif %}>
+        Amount High → Low
+    </option>
+
+    <option value="latest" {% if sort_by == "latest" %}selected{% endif %}>
+        Latest Date First
+    </option>
+
+    <option value="oldest" {% if sort_by == "oldest" %}selected{% endif %}>
+        Oldest Date First
+    </option>
+
+</select>
+
+        <button type="submit">Apply Filter</button>
+
+        <a href="/dashboard">Reset</a>
+
+    </form>
+
+    <hr>
+
+    <h2>🧾 All Expenses</h2>
+
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Action</th>
+        </tr>
+
+        {% for exp in expenses %}
+        <tr>
+            <td>{{ exp[0] }}</td>
+            <td>{{ exp[1] }}</td>
+            <td>{{ exp[2] }}</td>
+            <td>{{ exp[3] }}</td>
+            <td>₹{{ exp[4] }}</td>
+            <td>
+                <a href="/edit/{{ exp[0] }}">✏️ Edit</a>
+                |
+                <a href="/delete/{{ exp[0] }}">🗑 Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br><br>
+
+    <center>
+        <a href="/add"><button>➕ Add New Expense</button></a>
+        <a href="/export"><button>📥 Download CSV Report</button></a>
+        <a href="/export_pdf"><button>📄 Download PDF Report</button></a>
+    </center>
+
+</div>
+
+<script>
+function toggleDarkMode() {
+    document.body.classList.toggle("dark");
+}
+
+const categoryData = {{ category_data | tojson }};
+const pieLabels = Object.keys(categoryData);
+const pieValues = Object.values(categoryData);
+
+new Chart(document.getElementById("expenseChart"), {
+    type: "pie",
+    data: {
+        labels: pieLabels,
+        datasets: [{
+            data: pieValues
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+
+const monthlyData = {{ monthly_data | tojson }};
+const months = Object.keys(monthlyData);
+const amounts = Object.values(monthlyData);
+
+new Chart(document.getElementById("monthlyChart"), {
+    type: "line",
+    data: {
+        labels: months,
+        datasets: [{
+            label: "Monthly Expense",
+            data: amounts,
+            fill: false,
+            tension: 0.3
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Edit Expense</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="container" style="max-width:500px;">
+
+```
+<h1>✏️ Edit Expense</h1>
+
+<form method="POST">
+
+    <label>Expense Name</label><br>
+    <input type="text"
+           name="name"
+           value="{{ expense[2] }}"
+           required
+           style="padding:10px; width:90%; border-radius:8px;">
+    <br><br>
+
+    <label>Category</label><br>
+
+    <select name="category"
+            required
+            style="padding:10px; width:95%; border-radius:8px;">
+
+        <option value="Food" {% if expense[3] == "Food" %}selected{% endif %}>🍔 Food</option>
+        <option value="Travel" {% if expense[3] == "Travel" %}selected{% endif %}>✈️ Travel</option>
+        <option value="Shopping" {% if expense[3] == "Shopping" %}selected{% endif %}>🛍️ Shopping</option>
+        <option value="Bills" {% if expense[3] == "Bills" %}selected{% endif %}>💡 Bills</option>
+        <option value="Entertainment" {% if expense[3] == "Entertainment" %}selected{% endif %}>🎬 Entertainment</option>
+        <option value="Education" {% if expense[3] == "Education" %}selected{% endif %}>📚 Education</option>
+        <option value="Health" {% if expense[3] == "Health" %}selected{% endif %}>🏥 Health</option>
+        <option value="Other" {% if expense[3] == "Other" %}selected{% endif %}>📦 Other</option>
+
+    </select>
+
+    <br><br>
+
+    <label>Amount</label><br>
+    <input type="number"
+           step="0.01"
+           name="amount"
+           value="{{ expense[4] }}"
+           required
+           style="padding:10px; width:90%; border-radius:8px;">
+    <br><br>
+
+    <button type="submit">💾 Update Expense</button>
+
+</form>
+
+<br>
+
+<a href="/dashboard">⬅ Back to Dashboard</a>
+```
+
+</div>
+
+</body>
+</html>
